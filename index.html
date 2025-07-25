@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Responsive Water Jug Puzzle | Pi Games</title>
+  <title>Water Jug Puzzle with Solution | Pi Games</title>
   <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Pi-symbol.svg/768px-Pi-symbol.svg.png">
   <style>
     * {
@@ -207,6 +207,10 @@
       transform: translateY(1px);
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
+    .solution-btn {
+      background: linear-gradient(to bottom, #ff9500, #ff5e00) !important;
+      margin-top: 10px;
+    }
     footer {
       margin-top: 30px;
       font-style: italic;
@@ -275,6 +279,101 @@
       to { transform: translateY(100vh); }
     }
     
+    /* Solution Guide */
+    .solution-container {
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 15px;
+      padding: 20px;
+      margin-top: 25px;
+      max-width: 800px;
+      width: 100%;
+      display: none;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .solution-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .solution-header h2 {
+      color: #ff9500;
+      font-size: clamp(1.3rem, 4vw, 1.6rem);
+    }
+    
+    .close-btn {
+      background: #ff5e00;
+      border: none;
+      color: white;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+    
+    .close-btn:hover {
+      transform: rotate(90deg) scale(1.1);
+      background: #ff3c00;
+    }
+    
+    .step-list {
+      text-align: left;
+      counter-reset: step-counter;
+    }
+    
+    .step-item {
+      position: relative;
+      margin-bottom: 15px;
+      padding: 15px 15px 15px 50px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      border-left: 3px solid #ff9500;
+    }
+    
+    .step-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateX(5px);
+    }
+    
+    .step-item::before {
+      counter-increment: step-counter;
+      content: counter(step-counter);
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #ff9500;
+      color: #000;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+    
+    .step-item.completed {
+      background: rgba(0, 212, 255, 0.1);
+      border-left: 3px solid #00d4ff;
+    }
+    
+    .step-item.completed::before {
+      background: #00d4ff;
+    }
+    
     /* Mobile-specific adjustments */
     @media (max-width: 768px) {
       #jugs {
@@ -293,6 +392,14 @@
       .status-card {
         min-width: 120px;
         padding: 10px 15px;
+      }
+      
+      .solution-container {
+        padding: 15px;
+      }
+      
+      .step-item {
+        padding: 12px 12px 12px 45px;
       }
     }
     
@@ -326,6 +433,15 @@
       footer {
         margin-top: 20px;
         padding: 8px 15px;
+      }
+      
+      .solution-container {
+        padding: 12px;
+      }
+      
+      .step-item {
+        padding: 10px 10px 10px 40px;
+        font-size: 0.9rem;
       }
     }
     
@@ -373,6 +489,7 @@
       <button id="pourAB">Pour A → B</button>
       <button id="pourBA">Pour B → A</button>
       <button id="reset">Reset</button>
+      <button id="showSolution" class="solution-btn">Show Solution</button>
     </div>
     
     <div id="status">
@@ -391,6 +508,21 @@
     </div>
     
     <div id="message"></div>
+    
+    <div id="solutionGuide" class="solution-container">
+      <div class="solution-header">
+        <h2>Solution Guide</h2>
+        <button class="close-btn">&times;</button>
+      </div>
+      <div class="step-list">
+        <div class="step-item">Fill the 5L jug (Jug B)</div>
+        <div class="step-item">Pour water from Jug B to Jug A</div>
+        <div class="step-item">Empty Jug A</div>
+        <div class="step-item">Pour remaining water from Jug B to Jug A</div>
+        <div class="step-item">Fill Jug B again</div>
+        <div class="step-item">Pour water from Jug B to Jug A until it's full</div>
+      </div>
+    </div>
   </div>
   
   <footer>
@@ -401,6 +533,7 @@
     let volumeA = 0;
     let volumeB = 0;
     let steps = 0;
+    let currentStep = 0;
 
     // Create background droplets
     function createBackgroundDrops() {
@@ -489,6 +622,9 @@
       // Add droplets to the jugs when they have water
       if (volumeA > 0) addDroplets('jugA', 5);
       if (volumeB > 0) addDroplets('jugB', 8);
+      
+      // Check if user is following the solution
+      checkSolutionProgress();
     }
     
     function removeDroplets(jugId) {
@@ -511,6 +647,28 @@
         document.getElementById('message').innerText = "";
         document.getElementById('message').style.boxShadow = "none";
       }
+    }
+    
+    function checkSolutionProgress() {
+      const stepItems = document.querySelectorAll('.step-item');
+      
+      // Reset all steps
+      stepItems.forEach(item => item.classList.remove('completed'));
+      
+      // Mark completed steps
+      for (let i = 0; i < currentStep; i++) {
+        if (i < stepItems.length) {
+          stepItems[i].classList.add('completed');
+        }
+      }
+    }
+    
+    function showSolution() {
+      document.getElementById('solutionGuide').style.display = 'block';
+    }
+    
+    function hideSolution() {
+      document.getElementById('solutionGuide').style.display = 'none';
     }
 
     // Initialize droplets
@@ -571,9 +729,46 @@
       volumeA = 0;
       volumeB = 0;
       steps = 0;
+      currentStep = 0;
       updateDisplay();
       document.getElementById('message').innerText = "";
       document.getElementById('message').style.boxShadow = "none";
+    });
+    
+    document.getElementById('showSolution').addEventListener('click', showSolution);
+    document.querySelector('.close-btn').addEventListener('click', hideSolution);
+    
+    // Auto-follow solution guide
+    document.getElementById('fillB').addEventListener('click', function() {
+      if (volumeA === 0 && volumeB === 0) currentStep = 1;
+    });
+    
+    document.getElementById('pourBA').addEventListener('click', function() {
+      if (volumeA === 3 && volumeB === 2) currentStep = 2;
+    });
+    
+    document.getElementById('emptyA').addEventListener('click', function() {
+      if (volumeA === 3 && volumeB === 2) currentStep = 3;
+    });
+    
+    document.getElementById('pourBA').addEventListener('click', function() {
+      if (volumeA === 0 && volumeB === 2) {
+        currentStep = 4;
+      }
+    });
+    
+    document.getElementById('fillB').addEventListener('click', function() {
+      if (volumeA === 2 && volumeB === 0) currentStep = 5;
+    });
+    
+    document.getElementById('pourBA').addEventListener('click', function() {
+      if (volumeA === 2 && volumeB === 5) {
+        currentStep = 6;
+        setTimeout(() => {
+          document.getElementById('message').innerText = "🎉 You completed all steps!";
+          document.getElementById('message').style.boxShadow = "0 4px 20px rgba(0, 255, 171, 0.6)";
+        }, 500);
+      }
     });
 
     // Initial display
