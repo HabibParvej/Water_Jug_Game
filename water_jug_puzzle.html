@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Realistic Water Jug Puzzle | Pi Games</title>
+  <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Pi-symbol.svg/768px-Pi-symbol.svg.png">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 60px;
+      perspective: 1000px;
+      overflow-x: hidden;
+    }
+    .splash {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: black;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      z-index: 9999;
+      animation: fadeOut 3s forwards;
+    }
+    @keyframes fadeOut {
+      0% {opacity: 1;}
+      80% {opacity: 1;}
+      100% {opacity: 0; visibility: hidden;}
+    }
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      text-shadow: 0 0 10px #00d4ff;
+      text-align: center;
+    }
+    .container {
+      text-align: center;
+      max-width: 800px;
+      width: 90%;
+      padding: 20px;
+    }
+    #goal {
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+      color: #00ffab;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+    #jugs {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 60px;
+      margin: 30px 0;
+      position: relative;
+      z-index: 1;
+    }
+    .jug-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .jug-label {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 5px 15px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+      font-weight: bold;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    .jug {
+      position: relative;
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.1);
+      border: 4px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px 20px 10px 10px;
+      overflow: hidden;
+      transform-style: preserve-3d;
+      box-shadow: 
+        0 10px 20px rgba(0, 0, 0, 0.5),
+        inset 0 -10px 30px rgba(255, 255, 255, 0.1),
+        inset 0 10px 20px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease;
+    }
+    .jug:hover {
+      transform: translateY(-5px) rotateX(5deg);
+    }
+    #jugA {
+      width: 100px;
+      height: 200px; /* 3L jug */
+    }
+    #jugB {
+      width: 130px;
+      height: 300px; /* 5L jug */
+    }
+    /* Glass effect for jugs */
+    .jug::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.1) 100%);
+      z-index: 1;
+      pointer-events: none;
+    }
+    /* Jug rim */
+    .jug::after {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: -4px;
+      right: -4px;
+      height: 12px;
+      background: linear-gradient(to right, #e0e0e0, #ffffff, #e0e0e0);
+      border-radius: 20px 20px 0 0;
+      z-index: 2;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .water {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: linear-gradient(to top, #1a5cad, #4da6ff);
+      border-radius: 0 0 10px 10px;
+      transition: height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 1;
+      box-shadow: inset 0 10px 15px rgba(0, 0, 0, 0.2);
+    }
+    /* Water surface effect */
+    .water::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 15px;
+      background: radial-gradient(ellipse at top, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 70%);
+      border-radius: 50%;
+      transform: translateY(-50%);
+    }
+    /* Water droplets */
+    .water-droplet {
+      position: absolute;
+      width: 5px;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      opacity: 0;
+      animation: droplet-fall 3s infinite;
+      z-index: 3;
+    }
+    @keyframes droplet-fall {
+      0% { opacity: 0; transform: translateY(-20px); }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { opacity: 0; transform: translateY(30px); }
+    }
+    #controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    #controls button {
+      background: linear-gradient(to bottom, #00d4ff, #00a8e8);
+      color: black;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      min-width: 120px;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+    }
+    #controls button::after {
+      content: '';
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      right: -10px;
+      bottom: -10px;
+      background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 80%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    #controls button:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+    }
+    #controls button:hover::after {
+      opacity: 1;
+    }
+    #controls button:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    footer {
+      margin-top: 40px;
+      font-style: italic;
+      font-size: 1.2rem;
+      color: #ccc;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 10px 20px;
+      border-radius: 10px;
+    }
+    #status {
+      margin-top: 20px;
+      font-size: 1.1rem;
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      flex-wrap: wrap;
+    }
+    .status-card {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 15px 25px;
+      border-radius: 10px;
+      min-width: 150px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .status-card p:first-child {
+      font-weight: bold;
+      color: #00d4ff;
+      margin-bottom: 5px;
+    }
+    #message {
+      font-size: 1.5rem;
+      margin-top: 25px;
+      font-weight: bold;
+      color: #00ffab;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 255, 171, 0.3);
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.5s ease;
+    }
+    .background-drops {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .drop {
+      position: absolute;
+      width: 3px;
+      height: 8px;
+      background: rgba(77, 166, 255, 0.3);
+      border-radius: 50%;
+      animation: drop-fall linear infinite;
+      opacity: 0.4;
+    }
+    @keyframes drop-fall {
+      to { transform: translateY(100vh); }
+    }
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      h1 { font-size: 2.2rem; }
+      #jugs { gap: 30px; }
+      #jugA { width: 80px; height: 160px; }
+      #jugB { width: 100px; height: 240px; }
+      #controls button { padding: 10px 15px; min-width: 100px; font-size: 14px; }
+      .status-card { padding: 10px 15px; min-width: 120px; }
+    }
+    @media (max-width: 480px) {
+      #jugs { flex-direction: column; align-items: center; gap: 40px; }
+      h1 { font-size: 1.8rem; }
+      .container { padding-top: 20px; }
+      #controls { gap: 8px; }
+      #controls button { padding: 8px 12px; min-width: 80px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="splash">A Pi Games Production</div>
+  <div class="background-drops" id="dropsContainer"></div>
+  
+  <div class="container">
+    <h1>💧 Water Jug Puzzle 💧</h1>
+    <p id="goal">Goal: Measure exactly 4 liters of water using the 3L and 5L jugs.</p>
+    
+    <div id="jugs">
+      <div class="jug-container">
+        <div class="jug-label">3L Jug</div>
+        <div id="jugA" class="jug">
+          <div id="waterA" class="water"></div>
+        </div>
+      </div>
+      <div class="jug-container">
+        <div class="jug-label">5L Jug</div>
+        <div id="jugB" class="jug">
+          <div id="waterB" class="water"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="controls">
+      <button id="fillA">Fill A</button>
+      <button id="fillB">Fill B</button>
+      <button id="emptyA">Empty A</button>
+      <button id="emptyB">Empty B</button>
+      <button id="pourAB">Pour A → B</button>
+      <button id="pourBA">Pour B → A</button>
+      <button id="reset">Reset</button>
+    </div>
+    
+    <div id="status">
+      <div class="status-card">
+        <p>Jug A</p>
+        <p><span id="volA">0</span>/3 L</p>
+      </div>
+      <div class="status-card">
+        <p>Jug B</p>
+        <p><span id="volB">0</span>/5 L</p>
+      </div>
+      <div class="status-card">
+        <p>Steps</p>
+        <p><span id="steps">0</span></p>
+      </div>
+    </div>
+    
+    <div id="message"></div>
+  </div>
+  
+  <footer>
+    <p>🎮 Powered by Pi Games (π)</p>
+  </footer>
+  
+  <script>
+    let volumeA = 0;
+    let volumeB = 0;
+    let steps = 0;
+    let dropletsInterval;
+
+    // Create background droplets
+    function createBackgroundDrops() {
+      const container = document.getElementById('dropsContainer');
+      const dropsCount = 30;
+      
+      for (let i = 0; i < dropsCount; i++) {
+        const drop = document.createElement('div');
+        drop.classList.add('drop');
+        
+        // Random position and animation
+        const left = Math.random() * 100;
+        const delay = Math.random() * 5;
+        const duration = 2 + Math.random() * 3;
+        
+        drop.style.left = `${left}%`;
+        drop.style.animationDuration = `${duration}s`;
+        drop.style.animationDelay = `${delay}s`;
+        
+        container.appendChild(drop);
+      }
+    }
+
+    // Add water droplets to jugs
+    function addDroplets(jugId, count) {
+      const jug = document.getElementById(jugId);
+      
+      for (let i = 0; i < count; i++) {
+        const droplet = document.createElement('div');
+        droplet.classList.add('water-droplet');
+        
+        // Position droplets randomly on the jug surface
+        const left = 10 + Math.random() * 80;
+        const delay = Math.random() * 2;
+        
+        droplet.style.left = `${left}%`;
+        droplet.style.animationDelay = `${delay}s`;
+        
+        jug.appendChild(droplet);
+      }
+    }
+
+    // Create water splash effect
+    function createSplashEffect(jugId) {
+      const jug = document.getElementById(jugId);
+      const splash = document.createElement('div');
+      splash.style.position = 'absolute';
+      splash.style.bottom = '0';
+      splash.style.left = '50%';
+      splash.style.transform = 'translateX(-50%)';
+      splash.style.width = '80%';
+      splash.style.height = '30px';
+      splash.style.background = 'radial-gradient(ellipse at center, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 70%)';
+      splash.style.borderRadius = '50%';
+      splash.style.zIndex = '3';
+      splash.style.opacity = '1';
+      
+      jug.appendChild(splash);
+      
+      // Animate splash
+      setTimeout(() => {
+        splash.style.transition = 'all 0.4s ease-out';
+        splash.style.opacity = '0';
+        splash.style.transform = 'translateX(-50%) scale(1.5)';
+        
+        // Remove splash after animation
+        setTimeout(() => {
+          if (jug.contains(splash)) {
+            jug.removeChild(splash);
+          }
+        }, 500);
+      }, 10);
+    }
+
+    function updateDisplay() {
+      document.getElementById('waterA').style.height = (volumeA / 3 * 100) + '%';
+      document.getElementById('waterB').style.height = (volumeB / 5 * 100) + '%';
+      document.getElementById('volA').innerText = volumeA;
+      document.getElementById('volB').innerText = volumeB;
+      document.getElementById('steps').innerText = steps;
+      
+      // Remove existing droplets
+      removeDroplets('jugA');
+      removeDroplets('jugB');
+      
+      // Add droplets to the jugs when they have water
+      if (volumeA > 0) addDroplets('jugA', 5);
+      if (volumeB > 0) addDroplets('jugB', 8);
+    }
+    
+    function removeDroplets(jugId) {
+      const jug = document.getElementById(jugId);
+      const droplets = jug.querySelectorAll('.water-droplet');
+      droplets.forEach(d => d.remove());
+    }
+
+    function checkWin() {
+      if (volumeA === 4 || volumeB === 4) {
+        document.getElementById('message').innerText = "🎉 You measured exactly 4L!";
+        document.getElementById('message').style.boxShadow = "0 4px 20px rgba(0, 255, 171, 0.6)";
+        document.getElementById('message').style.transform = "scale(1.05)";
+        
+        // Confetti effect
+        setTimeout(() => {
+          document.getElementById('message').style.transform = "scale(1)";
+        }, 500);
+      } else {
+        document.getElementById('message').innerText = "";
+        document.getElementById('message').style.boxShadow = "none";
+      }
+    }
+
+    // Initialize droplets
+    createBackgroundDrops();
+    
+    // Setup event listeners
+    document.getElementById('fillA').addEventListener('click', function() {
+      volumeA = 3;
+      steps++;
+      createSplashEffect('jugA');
+      updateDisplay();
+      checkWin();
+    });
+
+    document.getElementById('fillB').addEventListener('click', function() {
+      volumeB = 5;
+      steps++;
+      createSplashEffect('jugB');
+      updateDisplay();
+      checkWin();
+    });
+
+    document.getElementById('emptyA').addEventListener('click', function() {
+      volumeA = 0;
+      steps++;
+      updateDisplay();
+      checkWin();
+    });
+
+    document.getElementById('emptyB').addEventListener('click', function() {
+      volumeB = 0;
+      steps++;
+      updateDisplay();
+      checkWin();
+    });
+
+    document.getElementById('pourAB').addEventListener('click', function() {
+      let amount = Math.min(volumeA, 5 - volumeB);
+      volumeA -= amount;
+      volumeB += amount;
+      steps++;
+      createSplashEffect('jugB');
+      updateDisplay();
+      checkWin();
+    });
+
+    document.getElementById('pourBA').addEventListener('click', function() {
+      let amount = Math.min(volumeB, 3 - volumeA);
+      volumeB -= amount;
+      volumeA += amount;
+      steps++;
+      createSplashEffect('jugA');
+      updateDisplay();
+      checkWin();
+    });
+
+    document.getElementById('reset').addEventListener('click', function() {
+      volumeA = 0;
+      volumeB = 0;
+      steps = 0;
+      updateDisplay();
+      document.getElementById('message').innerText = "";
+      document.getElementById('message').style.boxShadow = "none";
+    });
+
+    // Initial display
+    updateDisplay();
+  </script>
+</body>
+</html>
