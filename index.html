@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Water Jug Puzzle with Solution | Pi Games</title>
+  <title>Water Jug Puzzle | Pi Games</title>
   <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Pi-symbol.svg/768px-Pi-symbol.svg.png">
   <style>
     * {
@@ -56,12 +56,40 @@
       width: 100%;
       padding: 20px;
     }
+    #levelSelector {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .level-btn {
+      background: linear-gradient(to bottom, #4e54c8, #8f94fb);
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-weight: bold;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+      min-width: 120px;
+    }
+    .level-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+    }
+    .level-btn.active {
+      background: linear-gradient(to bottom, #00d4ff, #00a8e8);
+      color: #000;
+      box-shadow: 0 0 15px rgba(0, 212, 255, 0.6);
+    }
     #goal {
       font-size: clamp(1rem, 3vw, 1.2rem);
       margin-bottom: 20px;
       color: #00ffab;
       background: rgba(0, 0, 0, 0.3);
-      padding: 10px;
+      padding: 15px;
       border-radius: 10px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     }
@@ -210,6 +238,12 @@
     .solution-btn {
       background: linear-gradient(to bottom, #ff9500, #ff5e00) !important;
       margin-top: 10px;
+    }
+    .hint-btn {
+      background: linear-gradient(to bottom, #9c27b0, #673ab7) !important;
+    }
+    .undo-btn {
+      background: linear-gradient(to bottom, #4caf50, #2e7d32) !important;
     }
     footer {
       margin-top: 30px;
@@ -374,6 +408,60 @@
       background: #00d4ff;
     }
     
+    /* Custom Level Form */
+    .custom-form {
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 15px;
+      padding: 20px;
+      margin-top: 20px;
+      display: none;
+      box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+    }
+    
+    .custom-form h3 {
+      color: #00d4ff;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      color: #00ffab;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 2px solid #00d4ff;
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      font-size: 1rem;
+    }
+    
+    #applyCustom {
+      background: linear-gradient(to bottom, #00d4ff, #00a8e8);
+      color: black;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-weight: bold;
+      width: 100%;
+      margin-top: 10px;
+      transition: all 0.3s ease;
+    }
+    
+    #applyCustom:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+    }
+    
     /* Mobile-specific adjustments */
     @media (max-width: 768px) {
       #jugs {
@@ -400,6 +488,12 @@
       
       .step-item {
         padding: 12px 12px 12px 45px;
+      }
+      
+      .level-btn {
+        min-width: 100px;
+        padding: 6px 10px;
+        font-size: 0.9rem;
       }
     }
     
@@ -443,17 +537,11 @@
         padding: 10px 10px 10px 40px;
         font-size: 0.9rem;
       }
-    }
-    
-    @media (max-width: 350px) {
-      #controls button {
-        min-width: 70px;
-        font-size: 0.7rem;
-        padding: 5px 8px;
-      }
       
-      .jug-label {
-        padding: 4px 12px;
+      .level-btn {
+        min-width: 80px;
+        padding: 5px 8px;
+        font-size: 0.8rem;
       }
     }
   </style>
@@ -464,7 +552,31 @@
   
   <div class="container">
     <h1>💧 Water Jug Puzzle 💧</h1>
-    <p id="goal">Goal: Measure exactly 4 liters of water using the 3L and 5L jugs.</p>
+    
+    <div id="levelSelector">
+      <button class="level-btn active" data-level="1">Level 1: 3L & 5L → 4L</button>
+      <button class="level-btn" data-level="2">Level 2: 5L & 7L → 2L</button>
+      <button class="level-btn" data-level="3">Level 3: Custom</button>
+    </div>
+    
+    <div id="goal">Goal: Measure exactly 4 liters of water using the 3L and 5L jugs.</div>
+    
+    <div class="custom-form" id="customForm">
+      <h3>Customize Your Puzzle</h3>
+      <div class="form-group">
+        <label for="jugACustom">Jug A Capacity (Liters)</label>
+        <input type="number" id="jugACustom" min="1" max="20" value="3">
+      </div>
+      <div class="form-group">
+        <label for="jugBCustom">Jug B Capacity (Liters)</label>
+        <input type="number" id="jugBCustom" min="1" max="20" value="5">
+      </div>
+      <div class="form-group">
+        <label for="targetCustom">Target Amount (Liters)</label>
+        <input type="number" id="targetCustom" min="1" max="20" value="4">
+      </div>
+      <button id="applyCustom">Apply Settings</button>
+    </div>
     
     <div id="jugs">
       <div class="jug-container">
@@ -488,6 +600,8 @@
       <button id="emptyB">Empty B</button>
       <button id="pourAB">Pour A → B</button>
       <button id="pourBA">Pour B → A</button>
+      <button id="undo" class="undo-btn">Undo</button>
+      <button id="hint" class="hint-btn">Get Hint</button>
       <button id="reset">Reset</button>
       <button id="showSolution" class="solution-btn">Show Solution</button>
     </div>
@@ -495,15 +609,19 @@
     <div id="status">
       <div class="status-card">
         <p>Jug A</p>
-        <p><span id="volA">0</span>/3 L</p>
+        <p><span id="volA">0</span>/<span id="capA">3</span> L</p>
       </div>
       <div class="status-card">
         <p>Jug B</p>
-        <p><span id="volB">0</span>/5 L</p>
+        <p><span id="volB">0</span>/<span id="capB">5</span> L</p>
       </div>
       <div class="status-card">
         <p>Steps</p>
         <p><span id="steps">0</span></p>
+      </div>
+      <div class="status-card">
+        <p>Time</p>
+        <p><span id="timer">00:00</span></p>
       </div>
     </div>
     
@@ -530,11 +648,20 @@
   </footer>
   
   <script>
+    // Game state
     let volumeA = 0;
     let volumeB = 0;
     let steps = 0;
     let currentStep = 0;
-
+    let jugACapacity = 3;
+    let jugBCapacity = 5;
+    let target = 4;
+    let currentLevel = 1;
+    let history = [];
+    let timerInterval = null;
+    let elapsedTime = 0;
+    let gameStarted = false;
+    
     // Create background droplets
     function createBackgroundDrops() {
       const container = document.getElementById('dropsContainer');
@@ -609,19 +736,21 @@
     }
 
     function updateDisplay() {
-      document.getElementById('waterA').style.height = (volumeA / 3 * 100) + '%';
-      document.getElementById('waterB').style.height = (volumeB / 5 * 100) + '%';
+      document.getElementById('waterA').style.height = (volumeA / jugACapacity * 100) + '%';
+      document.getElementById('waterB').style.height = (volumeB / jugBCapacity * 100) + '%';
       document.getElementById('volA').innerText = volumeA;
       document.getElementById('volB').innerText = volumeB;
       document.getElementById('steps').innerText = steps;
+      document.getElementById('capA').innerText = jugACapacity;
+      document.getElementById('capB').innerText = jugBCapacity;
       
       // Remove existing droplets
       removeDroplets('jugA');
       removeDroplets('jugB');
       
       // Add droplets to the jugs when they have water
-      if (volumeA > 0) addDroplets('jugA', 5);
-      if (volumeB > 0) addDroplets('jugB', 8);
+      if (volumeA > 0) addDroplets('jugA', Math.min(5, jugACapacity));
+      if (volumeB > 0) addDroplets('jugB', Math.min(8, jugBCapacity));
       
       // Check if user is following the solution
       checkSolutionProgress();
@@ -634,19 +763,19 @@
     }
 
     function checkWin() {
-      if (volumeA === 4 || volumeB === 4) {
-        document.getElementById('message').innerText = "🎉 You measured exactly 4L!";
+      if (volumeA === target || volumeB === target) {
+        document.getElementById('message').innerText = "🎉 You measured exactly " + target + "L!";
         document.getElementById('message').style.boxShadow = "0 4px 20px rgba(0, 255, 171, 0.6)";
         document.getElementById('message').style.transform = "scale(1.05)";
+        stopTimer();
         
         // Confetti effect
         setTimeout(() => {
           document.getElementById('message').style.transform = "scale(1)";
         }, 500);
-      } else {
-        document.getElementById('message').innerText = "";
-        document.getElementById('message').style.boxShadow = "none";
+        return true;
       }
+      return false;
     }
     
     function checkSolutionProgress() {
@@ -670,73 +799,249 @@
     function hideSolution() {
       document.getElementById('solutionGuide').style.display = 'none';
     }
+    
+    // Save current state to history
+    function saveState() {
+      history.push({
+        volumeA: volumeA,
+        volumeB: volumeB,
+        steps: steps
+      });
+      
+      // Limit history to 20 states
+      if (history.length > 20) {
+        history.shift();
+      }
+    }
+    
+    // Undo last action
+    function undo() {
+      if (history.length > 0) {
+        const prevState = history.pop();
+        volumeA = prevState.volumeA;
+        volumeB = prevState.volumeB;
+        steps = prevState.steps;
+        updateDisplay();
+        checkWin();
+      } else {
+        document.getElementById('message').innerText = "No more actions to undo!";
+        document.getElementById('message').style.boxShadow = "0 4px 15px rgba(255, 0, 0, 0.3)";
+        setTimeout(() => {
+          document.getElementById('message').innerText = "";
+          document.getElementById('message').style.boxShadow = "none";
+        }, 2000);
+      }
+    }
+    
+    // Get hint for next move
+    function getHint() {
+      if (checkWin()) return;
+      
+      let hint = "";
+      
+      // Simple hint logic based on state
+      if (volumeA === 0 && volumeB === 0) {
+        hint = "Start by filling Jug B";
+      } else if (volumeB === jugBCapacity && volumeA === 0) {
+        hint = "Pour water from Jug B to Jug A";
+      } else if (volumeA === jugACapacity && volumeB > 0) {
+        hint = "Empty Jug A";
+      } else if (volumeA === 0 && volumeB > 0) {
+        hint = "Pour remaining water from Jug B to Jug A";
+      } else if (volumeA > 0 && volumeB === 0) {
+        hint = "Fill Jug B again";
+      } else if (volumeB === jugBCapacity && volumeA > 0) {
+        hint = "Pour water from Jug B to Jug A until it's full";
+      } else {
+        hint = "Try pouring water between jugs";
+      }
+      
+      document.getElementById('message').innerText = "💡 Hint: " + hint;
+      document.getElementById('message').style.boxShadow = "0 4px 15px rgba(156, 39, 176, 0.5)";
+    }
+    
+    // Timer functions
+    function startTimer() {
+      if (!gameStarted) {
+        gameStarted = true;
+        const startTime = new Date().getTime();
+        
+        timerInterval = setInterval(() => {
+          const now = new Date().getTime();
+          elapsedTime = Math.floor((now - startTime) / 1000);
+          const minutes = Math.floor(elapsedTime / 60).toString().padStart(2, '0');
+          const seconds = (elapsedTime % 60).toString().padStart(2, '0');
+          document.getElementById('timer').textContent = `${minutes}:${seconds}`;
+        }, 1000);
+      }
+    }
+    
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+    
+    function resetTimer() {
+      stopTimer();
+      elapsedTime = 0;
+      document.getElementById('timer').textContent = '00:00';
+      gameStarted = false;
+    }
+    
+    // Set level
+    function setLevel(level) {
+      currentLevel = level;
+      resetTimer();
+      history = [];
+      
+      // Update level buttons
+      document.querySelectorAll('.level-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector(`.level-btn[data-level="${level}"]`).classList.add('active');
+      
+      // Hide custom form if not level 3
+      document.getElementById('customForm').style.display = level === 3 ? 'block' : 'none';
+      
+      // Set capacities and target based on level
+      if (level === 1) {
+        jugACapacity = 3;
+        jugBCapacity = 5;
+        target = 4;
+      } else if (level === 2) {
+        jugACapacity = 5;
+        jugBCapacity = 7;
+        target = 2;
+      }
+      
+      // Update goal text
+      document.getElementById('goal').innerText = `Goal: Measure exactly ${target}L of water using the ${jugACapacity}L and ${jugBCapacity}L jugs.`;
+      
+      // Reset game state
+      resetPuzzle();
+    }
+    
+    // Apply custom level settings
+    function applyCustomSettings() {
+      const jugA = parseInt(document.getElementById('jugACustom').value) || 3;
+      const jugB = parseInt(document.getElementById('jugBCustom').value) || 5;
+      const targetVal = parseInt(document.getElementById('targetCustom').value) || 4;
+      
+      // Validate inputs
+      if (jugA < 1 || jugB < 1 || targetVal < 1 || 
+          jugA > 20 || jugB > 20 || targetVal > Math.max(jugA, jugB)) {
+        document.getElementById('message').innerText = "Invalid input! Values must be between 1-20 and target <= largest jug.";
+        document.getElementById('message').style.boxShadow = "0 4px 15px rgba(255, 0, 0, 0.3)";
+        setTimeout(() => {
+          document.getElementById('message').innerText = "";
+          document.getElementById('message').style.boxShadow = "none";
+        }, 3000);
+        return;
+      }
+      
+      jugACapacity = jugA;
+      jugBCapacity = jugB;
+      target = targetVal;
+      
+      // Update goal text
+      document.getElementById('goal').innerText = `Goal: Measure exactly ${target}L of water using the ${jugACapacity}L and ${jugBCapacity}L jugs.`;
+      
+      // Reset game state
+      resetPuzzle();
+    }
+    
+    // Reset puzzle to initial state
+    function resetPuzzle() {
+      volumeA = 0;
+      volumeB = 0;
+      steps = 0;
+      currentStep = 0;
+      history = [];
+      resetTimer();
+      updateDisplay();
+      document.getElementById('message').innerText = "";
+      document.getElementById('message').style.boxShadow = "none";
+    }
 
     // Initialize droplets
     createBackgroundDrops();
     
     // Setup event listeners
     document.getElementById('fillA').addEventListener('click', function() {
-      volumeA = 3;
+      saveState();
+      volumeA = jugACapacity;
       steps++;
       createSplashEffect('jugA');
       updateDisplay();
-      checkWin();
+      if (!checkWin()) startTimer();
     });
 
     document.getElementById('fillB').addEventListener('click', function() {
-      volumeB = 5;
+      saveState();
+      volumeB = jugBCapacity;
       steps++;
       createSplashEffect('jugB');
       updateDisplay();
-      checkWin();
+      if (!checkWin()) startTimer();
     });
 
     document.getElementById('emptyA').addEventListener('click', function() {
+      saveState();
       volumeA = 0;
       steps++;
       updateDisplay();
-      checkWin();
+      if (!checkWin()) startTimer();
     });
 
     document.getElementById('emptyB').addEventListener('click', function() {
+      saveState();
       volumeB = 0;
       steps++;
       updateDisplay();
-      checkWin();
+      if (!checkWin()) startTimer();
     });
 
     document.getElementById('pourAB').addEventListener('click', function() {
-      let amount = Math.min(volumeA, 5 - volumeB);
+      saveState();
+      let amount = Math.min(volumeA, jugBCapacity - volumeB);
       volumeA -= amount;
       volumeB += amount;
       steps++;
       createSplashEffect('jugB');
       updateDisplay();
-      checkWin();
+      if (!checkWin()) startTimer();
     });
 
     document.getElementById('pourBA').addEventListener('click', function() {
-      let amount = Math.min(volumeB, 3 - volumeA);
+      saveState();
+      let amount = Math.min(volumeB, jugACapacity - volumeA);
       volumeB -= amount;
       volumeA += amount;
       steps++;
       createSplashEffect('jugA');
       updateDisplay();
-      checkWin();
+      if (!checkWin()) startTimer();
     });
+    
+    document.getElementById('undo').addEventListener('click', undo);
+    document.getElementById('hint').addEventListener('click', getHint);
 
-    document.getElementById('reset').addEventListener('click', function() {
-      volumeA = 0;
-      volumeB = 0;
-      steps = 0;
-      currentStep = 0;
-      updateDisplay();
-      document.getElementById('message').innerText = "";
-      document.getElementById('message').style.boxShadow = "none";
-    });
+    document.getElementById('reset').addEventListener('click', resetPuzzle);
     
     document.getElementById('showSolution').addEventListener('click', showSolution);
     document.querySelector('.close-btn').addEventListener('click', hideSolution);
+    
+    // Level selector
+    document.querySelectorAll('.level-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        setLevel(parseInt(this.dataset.level));
+      });
+    });
+    
+    // Custom level apply button
+    document.getElementById('applyCustom').addEventListener('click', applyCustomSettings);
     
     // Auto-follow solution guide
     document.getElementById('fillB').addEventListener('click', function() {
